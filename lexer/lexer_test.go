@@ -76,3 +76,56 @@ func TestNextToken(t *testing.T) {
 		}
 	}
 }
+
+func TestUTF8Parsing(t *testing.T) {
+	input := `let pięć = 5;
+	let dziesięć = 10;
+	let ś_ęą = 0;
+	let 🫡 = 123;
+	`
+
+	tests := []struct {
+		expectedType    token.TokenType
+		expectedLIteral string
+	}{
+		{token.LET, "let"},
+		{token.IDENT, "pięć"},
+		{token.ASSIGN, "="},
+		{token.INT, "5"},
+		{token.SEMICOLON, ";"},
+
+		{token.LET, "let"},
+		{token.IDENT, "dziesięć"},
+		{token.ASSIGN, "="},
+		{token.INT, "10"},
+		{token.SEMICOLON, ";"},
+
+		{token.LET, "let"},
+		{token.IDENT, "ś_ęą"},
+		{token.ASSIGN, "="},
+		{token.INT, "0"},
+		{token.SEMICOLON, ";"},
+
+		{token.LET, "let"},
+		{token.IDENT, "🫡"},
+		{token.ASSIGN, "="},
+		{token.INT, "123"},
+		{token.SEMICOLON, ";"},
+
+		{token.EOF, ""},
+	}
+
+	l := New(input)
+
+	for i, tt := range tests {
+		tok := l.NextToken()
+
+		if tok.Type != tt.expectedType {
+			t.Fatalf("tests[%d] - token type wrong. expected=%q, got=%q", i, tt.expectedType, tok.Type)
+		}
+
+		if tok.Literal != tt.expectedLIteral {
+			t.Fatalf("tests[%d] - literal wrong. expecte=%q, got=%q", i, tt.expectedLIteral, tok.Literal)
+		}
+	}
+}

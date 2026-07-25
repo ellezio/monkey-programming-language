@@ -1,12 +1,15 @@
 package lexer
 
-import "monkey/token"
+import (
+	"monkey/token"
+	"unicode/utf8"
+)
 
 type Lexer struct {
 	input        string
 	position     int  // current position in input
 	readPosition int  // next position - serves purpose of peek
-	ch           byte // current character on which position points
+	ch           rune // current character on which position points
 }
 
 func New(input string) *Lexer {
@@ -16,14 +19,15 @@ func New(input string) *Lexer {
 }
 
 func (l *Lexer) ReadChar() {
+	rb := 1
 	if l.readPosition >= len(l.input) {
 		l.ch = 0
 	} else {
-		l.ch = l.input[l.readPosition]
+		l.ch, rb = utf8.DecodeRuneInString(l.input[l.readPosition:])
 	}
 
 	l.position = l.readPosition
-	l.readPosition += 1
+	l.readPosition += rb
 }
 
 func (l *Lexer) NextToken() token.Token {
@@ -91,14 +95,17 @@ func (l *Lexer) skipWhitespace() {
 	}
 }
 
-func newToken(tokenType token.TokenType, ch byte) token.Token {
+func newToken(tokenType token.TokenType, ch rune) token.Token {
 	return token.Token{Type: tokenType, Literal: string(ch)}
 }
 
-func isLetter(ch byte) bool {
-	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_'
+func isLetter(ch rune) bool {
+	if utf8.RuneLen(ch) == 1 {
+		return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_'
+	}
+	return utf8.ValidRune(ch)
 }
 
-func isDigit(ch byte) bool {
+func isDigit(ch rune) bool {
 	return '0' <= ch && ch <= '9'
 }
