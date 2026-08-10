@@ -7,11 +7,19 @@ import (
 	"monkey/token"
 )
 
+type (
+	prefixParseFn func() ast.Expression
+	infixParseFn  func(left ast.Expression) ast.Expression
+)
+
 type Parser struct {
 	l         *lexer.Lexer
 	errors    []string
 	currToken token.Token
 	peekToken token.Token
+
+	prefixParseFns map[token.TokenType]prefixParseFn
+	infixParseFns  map[token.TokenType]infixParseFn
 }
 
 func New(l *lexer.Lexer) *Parser {
@@ -103,4 +111,12 @@ func (p *Parser) Errors() []string {
 func (p *Parser) peekError(expected token.TokenType) {
 	msg := fmt.Sprintf("expected next token to be %s, got %s instead", expected, p.peekToken.Type)
 	p.errors = append(p.errors, msg)
+}
+
+func (p *Parser) registerPrefixParseFn(tokenType token.TokenType, fn prefixParseFn) {
+	p.prefixParseFns[tokenType] = fn
+}
+
+func (p *Parser) registerInfixParseFn(tokenType token.TokenType, fn infixParseFn) {
+	p.infixParseFns[tokenType] = fn
 }
