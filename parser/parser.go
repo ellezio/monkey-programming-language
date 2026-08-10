@@ -7,6 +7,16 @@ import (
 	"monkey/token"
 )
 
+const (
+	LOWEST      int = iota
+	EQUALS          // ==
+	LESSGREATER     // > or <
+	SUM             // +
+	PRODUCT         // *
+	PREFIX          // -X or !X
+	CALL            // myFunction(X)
+)
+
 type (
 	prefixParseFn func() ast.Expression
 	infixParseFn  func(left ast.Expression) ast.Expression
@@ -26,7 +36,13 @@ func New(l *lexer.Lexer) *Parser {
 	p := &Parser{
 		l:      l,
 		errors: []string{},
+
+		prefixParseFns: map[token.TokenType]prefixParseFn{},
+		infixParseFns:  map[token.TokenType]infixParseFn{},
 	}
+
+	p.registerPrefixParseFn(token.IDENT, p.parseIdentifier)
+
 	p.NextToken()
 	p.NextToken()
 	return p
@@ -60,7 +76,7 @@ func (p *Parser) parseStatement() ast.Statement {
 	case token.RETURN:
 		return p.parseReturnStatement()
 	default:
-		return nil
+		return p.parseExpressionStatement()
 	}
 }
 
@@ -94,6 +110,29 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 	return retStmt
 }
 
+func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
+	stmt := &ast.ExpressionStatement{Token: p.currToken}
+
+	stmt.Expression = p.parseExpression(LOWEST)
+
+	if p.peekToken.Type == token.SEMICOLON {
+		p.NextToken()
+	}
+
+	return stmt
+}
+
+func (p *Parser) parseExpression(precedence int) ast.Expression {
+	prefix := p.prefixParseFns[p.currToken.Type]
+	if prefix == nil {
+		return nil
+	}
+
+	leftExp := prefix()
+
+	return leftExp
+}
+
 func (p *Parser) expectPeek(expected token.TokenType) bool {
 	if p.peekToken.Type == expected {
 		p.NextToken()
@@ -119,4 +158,8 @@ func (p *Parser) registerPrefixParseFn(tokenType token.TokenType, fn prefixParse
 
 func (p *Parser) registerInfixParseFn(tokenType token.TokenType, fn infixParseFn) {
 	p.infixParseFns[tokenType] = fn
+}
+
+func (p *Parser) parseIdentifier() ast.Expression {
+	return &ast.Identifier{Token: p.currToken, Value: p.currToken.Literal}
 }

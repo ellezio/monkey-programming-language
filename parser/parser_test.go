@@ -14,7 +14,7 @@ func TestLetStatements(t *testing.T) {
 	`
 
 	l := lexer.New(input)
-	program := prepareProgram(t, l)
+	program := prepareProgram(t, l, 3)
 
 	tests := []struct {
 		expectedIdentifier string
@@ -65,7 +65,7 @@ func TestReturnStatements(t *testing.T) {
 	`
 
 	l := lexer.New(input)
-	program := prepareProgram(t, l)
+	program := prepareProgram(t, l, 3)
 
 	for _, stmt := range program.Statements {
 		if stmt.TokenLiteral() != "return" {
@@ -79,7 +79,31 @@ func TestReturnStatements(t *testing.T) {
 	}
 }
 
-func prepareProgram(t *testing.T, l *lexer.Lexer) *ast.Program {
+func TestIdentifierExpression(t *testing.T) {
+	input := `foobar;`
+	l := lexer.New(input)
+	program := prepareProgram(t, l, 1)
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("program.Statements[0] not *ast.ExpressionStatement. got=%T", program.Statements[0])
+	}
+
+	ident, ok := stmt.Expression.(*ast.Identifier)
+	if !ok {
+		t.Fatalf("expression not *ast.Identifier. got=%T", stmt.Expression)
+	}
+
+	if ident.Value != "foobar" {
+		t.Errorf("ident.Value not %q. got=%q", "foobar", ident.Value)
+	}
+
+	if ident.TokenLiteral() != "foobar" {
+		t.Errorf("ident.TokenLiteral() not %q. got=%q", "foobar", ident.TokenLiteral())
+	}
+}
+
+func prepareProgram(t *testing.T, l *lexer.Lexer, expectedStatementsLen int) *ast.Program {
 	p := New(l)
 
 	program := p.ParseProgram()
@@ -89,8 +113,8 @@ func prepareProgram(t *testing.T, l *lexer.Lexer) *ast.Program {
 		t.Fatalf("ParseProgram() returned nil")
 	}
 
-	if len(program.Statements) != 3 {
-		t.Fatalf("program.Statements does not contain 3 statements. got=%d", len(program.Statements))
+	if len(program.Statements) != expectedStatementsLen {
+		t.Fatalf("program.Statements does not contain %d statements. got=%d", expectedStatementsLen, len(program.Statements))
 	}
 
 	return program
