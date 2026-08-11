@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"monkey/ast"
 	"monkey/lexer"
 	"testing"
@@ -113,18 +114,63 @@ func TestIntegerLiteral(t *testing.T) {
 		t.Fatalf("program.Statements[0] not *ast.ExpressionStatement. got=%T", program.Statements[0])
 	}
 
-	lit, ok := stmt.Expression.(*ast.IntegerLiteral)
+	if !testIntegerLiteral(t, stmt.Expression, 5) {
+		return
+	}
+}
+
+func TestPrefixExpression(t *testing.T) {
+	tests := []struct {
+		input    string
+		operator string
+		operand  int64
+	}{
+		{"!5", "!", 5},
+		{"-15", "-", 15},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		program := prepareProgram(t, l, 1)
+
+		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+		if !ok {
+			t.Fatalf("program.Statements is not *ast.ExpressionStatement. got=%T", program.Statements[0])
+		}
+
+		exp, ok := stmt.Expression.(*ast.PrefixExpression)
+		if !ok {
+			t.Fatalf("stmt.Expression is not *ast.PrefixExpression. got=%T", stmt.Expression)
+		}
+
+		if exp.Operator != tt.operator {
+			t.Fatalf("exp.Oparator is not %q. got=%q", tt.operator, exp.Operator)
+		}
+
+		if !testIntegerLiteral(t, exp.Operand, tt.operand) {
+			return
+		}
+	}
+}
+
+func testIntegerLiteral(t *testing.T, exp ast.Expression, expectedValue int64) bool {
+	il, ok := exp.(*ast.IntegerLiteral)
 	if !ok {
-		t.Fatalf("expression not *ast.IntegerLiteral. got=%T", stmt.Expression)
+		t.Errorf("expression is not *ast.IntegerLiteral. got=%T", exp)
+		return false
 	}
 
-	if lit.Value != 5 {
-		t.Errorf("lit.Value not %d. got=%d", 5, lit.Value)
+	if il.Value != expectedValue {
+		t.Errorf("lit.Value is not %d. got=%d", expectedValue, il.Value)
+		return false
 	}
 
-	if lit.TokenLiteral() != "5" {
-		t.Errorf("ident.TokenLiteral() not %q. got=%q", "5", lit.TokenLiteral())
+	if il.TokenLiteral() != fmt.Sprintf("%d", expectedValue) {
+		t.Errorf("ident.TokenLiteral() is not %d. got=%s", expectedValue, il.TokenLiteral())
+		return false
 	}
+
+	return true
 }
 
 func prepareProgram(t *testing.T, l *lexer.Lexer, expectedStatementsLen int) *ast.Program {
