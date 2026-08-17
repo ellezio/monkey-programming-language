@@ -260,6 +260,85 @@ func TestBooleanLiteral(t *testing.T) {
 	}
 }
 
+func TestIfExpression(t *testing.T) {
+	input := `if (x < y) { x }`
+	l := lexer.New(input)
+	program := prepareProgram(t, l, 1)
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("program.Statements[0] is not *ast.ExpressionStatement. got=%T", program.Statements[0])
+	}
+
+	ifexp, ok := stmt.Expression.(*ast.IfExpression)
+	if !ok {
+		t.Fatalf("stmt.Expression is not *ast.IfExpression. got=%T", stmt.Expression)
+	}
+
+	if !testInfixExpression(t, ifexp.Condition, "x", "<", "y") {
+		return
+	}
+
+	if len(ifexp.Consequence.Statements) != 1 {
+		t.Fatalf("ifexp.Consequence.Statements does not contain %d statements. got=%d", 1, len(ifexp.Consequence.Statements))
+	}
+
+	consequence, ok := ifexp.Consequence.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("ifexp.Consequence.Statements[0] is not *ast.ExpressionStatement. got=%T", ifexp.Consequence.Statements[0])
+	}
+
+	if !testIdentifier(t, consequence.Expression, "x") {
+		return
+	}
+}
+
+func TestIfElseExpression(t *testing.T) {
+	input := `if (x < y) { x } else { y }`
+	l := lexer.New(input)
+	program := prepareProgram(t, l, 1)
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("program.Statements[0] is not *ast.ExpressionStatement. got=%T", program.Statements[0])
+	}
+
+	ifexp, ok := stmt.Expression.(*ast.IfExpression)
+	if !ok {
+		t.Fatalf("stmt.Expression is not *ast.IfExpression. got=%T", stmt.Expression)
+	}
+
+	if !testInfixExpression(t, ifexp.Condition, "x", "<", "y") {
+		return
+	}
+
+	if len(ifexp.Consequence.Statements) != 1 {
+		t.Fatalf("ifexp.Consequence.Statements does not contain %d statements. got=%d", 1, len(ifexp.Consequence.Statements))
+	}
+
+	consequence, ok := ifexp.Consequence.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("ifexp.Consequence.Statements[0] is not *ast.ExpressionStatement. got=%T", ifexp.Consequence.Statements[0])
+	}
+
+	if !testIdentifier(t, consequence.Expression, "x") {
+		return
+	}
+
+	if len(ifexp.Alternative.Statements) != 1 {
+		t.Fatalf("ifexp.Alternative.Statements[0] does not contain %d statements. got=%T", 1, len(ifexp.Alternative.Statements))
+	}
+
+	alternative, ok := ifexp.Alternative.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("ifexp.Alternative.Statements[0] is not *ast.ExpressionStatement. got=%T", ifexp.Alternative.Statements[0])
+	}
+
+	if !testIdentifier(t, alternative.Expression, "y") {
+		return
+	}
+}
+
 func testLiteralExpression(t *testing.T, exp ast.Expression, expected any) bool {
 	switch v := expected.(type) {
 	case int:
