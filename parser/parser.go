@@ -125,7 +125,15 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 		return nil
 	}
 
-	for p.currToken.Type != token.SEMICOLON {
+	p.NextToken()
+
+	for p.currToken.Type == token.SEMICOLON {
+		return nil
+	}
+
+	letStmt.Value = p.parseExpression(LOWEST)
+
+	if p.peekToken.Type == token.SEMICOLON {
 		p.NextToken()
 	}
 
@@ -135,7 +143,15 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 	retStmt := &ast.ReturnStatement{Token: p.currToken}
 
-	for p.currToken.Type != token.SEMICOLON {
+	p.NextToken()
+
+	for p.currToken.Type == token.SEMICOLON {
+		return nil
+	}
+
+	retStmt.ReturnValue = p.parseExpression(LOWEST)
+
+	if p.peekToken.Type == token.SEMICOLON {
 		p.NextToken()
 	}
 

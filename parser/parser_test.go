@@ -8,32 +8,29 @@ import (
 )
 
 func TestLetStatements(t *testing.T) {
-	input := `
-	let x = 5;
-	let y = 10;
-	let foobar = 838383;
-	`
-
-	l := lexer.New(input)
-	program := prepareProgram(t, l, 3)
-
 	tests := []struct {
+		input              string
 		expectedIdentifier string
+		expectedValue      any
 	}{
-		{"x"},
-		{"y"},
-		{"foobar"},
+		{"let x = 5;", "x", 5},
+		{"let y = 10;", "y", 10},
+		{"let foobar = 838383;", "foobar", 838383},
 	}
 
-	for i, tt := range tests {
-		stmt := program.Statements[i]
-		if !testLetStatement(t, stmt, tt.expectedIdentifier) {
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		program := prepareProgram(t, l, 1)
+
+		stmt := program.Statements[0]
+
+		if !testLetStatement(t, stmt, tt.expectedIdentifier, tt.expectedValue) {
 			return
 		}
 	}
 }
 
-func testLetStatement(t *testing.T, s ast.Statement, name string) bool {
+func testLetStatement(t *testing.T, s ast.Statement, name string, value any) bool {
 	if s.TokenLiteral() != "let" {
 		t.Errorf("s.TokenLiteral() not 'let'. got=%q", s.TokenLiteral())
 		return false
@@ -55,27 +52,39 @@ func testLetStatement(t *testing.T, s ast.Statement, name string) bool {
 		return false
 	}
 
+	if !testLiteralExpression(t, letStmt.Value, value) {
+		return false
+	}
+
 	return true
 }
 
 func TestReturnStatements(t *testing.T) {
-	input := `
-	return 5;
-	return 10;
-	return 993322;
-	`
+	tests := []struct {
+		input         string
+		expectedValue any
+	}{
+		{"return 5;", 5},
+		{"return 10;", 10},
+		{"return 993322;", 993322},
+	}
 
-	l := lexer.New(input)
-	program := prepareProgram(t, l, 3)
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		program := prepareProgram(t, l, 1)
+		stmt := program.Statements[0]
 
-	for _, stmt := range program.Statements {
 		if stmt.TokenLiteral() != "return" {
 			t.Fatalf("stmt.TokenLiteral() not 'return'. got=%q", stmt.TokenLiteral())
 		}
 
-		_, ok := stmt.(*ast.ReturnStatement)
+		ret, ok := stmt.(*ast.ReturnStatement)
 		if !ok {
 			t.Fatalf("stmt is not *ast.ReturnStatement. got=%T", stmt)
+		}
+
+		if !testLiteralExpression(t, ret.ReturnValue, tt.expectedValue) {
+			return
 		}
 	}
 }
