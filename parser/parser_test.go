@@ -339,6 +339,76 @@ func TestIfElseExpression(t *testing.T) {
 	}
 }
 
+func TestFunctionLiteral(t *testing.T) {
+	input := `fn(x, y) { x + y; }`
+	l := lexer.New(input)
+	program := prepareProgram(t, l, 1)
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("program.Statements[0] is not *ast.ExpressionStatement. got=%T", program.Statements[0])
+	}
+
+	fnLit, ok := stmt.Expression.(*ast.FunctionLiteral)
+	if !ok {
+		t.Fatalf("stmt.Expression is not *ast.FunctionLiteral. got=%T", stmt.Expression)
+	}
+
+	if len(fnLit.Parameters) != 2 {
+		t.Fatalf("fnLit.Parameters expected to contain %d parameters. got=%d", 2, len(fnLit.Parameters))
+	}
+
+	if !testLiteralExpression(t, fnLit.Parameters[0], "x") {
+		return
+	}
+
+	if !testLiteralExpression(t, fnLit.Parameters[1], "y") {
+		return
+	}
+
+	if len(fnLit.Body.Statements) != 1 {
+		t.Fatalf("fnLit.Body.Statements expected to contain %d statements. got=%d", 1, len(fnLit.Body.Statements))
+	}
+
+	bodyStmt, ok := fnLit.Body.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("fnLit.Body.Statements[0] is not *ast.ExpressionStatement. got=%T", fnLit.Body.Statements[0])
+	}
+
+	if !testInfixExpression(t, bodyStmt.Expression, "x", "+", "y") {
+		return
+	}
+}
+
+func TestFunctionParametersParsing(t *testing.T) {
+	tests := []struct {
+		input          string
+		expectedParams []string
+	}{
+		{"fn() {};", []string{}},
+		{"fn(x) {};", []string{"x"}},
+		{"fn(x, y,z) {};", []string{"x", "y", "z"}},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		program := prepareProgram(t, l, 1)
+
+		stmt := program.Statements[0].(*ast.ExpressionStatement)
+		function := stmt.Expression.(*ast.FunctionLiteral)
+
+		if len(function.Parameters) != len(tt.expectedParams) {
+			t.Fatalf("length parameters wron, expected %d, got=%d", len(tt.expectedParams), len(function.Parameters))
+		}
+
+		for i, param := range function.Parameters {
+			if !testLiteralExpression(t, param, tt.expectedParams[i]) {
+				return
+			}
+		}
+	}
+}
+
 func testLiteralExpression(t *testing.T, exp ast.Expression, expected any) bool {
 	switch v := expected.(type) {
 	case int:

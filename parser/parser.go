@@ -61,6 +61,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefixParseFn(token.FALSE, p.parseBoolean)
 	p.registerPrefixParseFn(token.LPAREN, p.parseGroupedExpression)
 	p.registerPrefixParseFn(token.IF, p.parseIfExpression)
+	p.registerPrefixParseFn(token.FUNCTION, p.parseFunctionLiteral)
 
 	p.registerInfixParseFn(token.EQ, p.parseInfixExpression)
 	p.registerInfixParseFn(token.NOT_EQ, p.parseInfixExpression)
@@ -154,7 +155,7 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 func (p *Parser) parseExpression(precedence int) ast.Expression {
 	prefix := p.prefixParseFns[p.currToken.Type]
 	if prefix == nil {
-		msg := fmt.Sprintf("no prefix parse function for %s found", p.currToken.Literal)
+		msg := fmt.Sprintf("no prefix parse function for %s found", p.currToken.Type)
 		p.errors = append(p.errors, msg)
 		return nil
 	}
@@ -315,6 +316,50 @@ func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 	}
 
 	return block
+}
+
+func (p *Parser) parseFunctionLiteral() ast.Expression {
+	function := &ast.FunctionLiteral{Token: p.currToken}
+
+	if !p.expectPeek(token.LPAREN) {
+		return nil
+	}
+
+	function.Parameters = p.parseFunctionParameters()
+
+	if !p.expectPeek(token.LBRACE) {
+		return nil
+	}
+
+	function.Body = p.parseBlockStatement()
+
+	return function
+}
+
+func (p *Parser) parseFunctionParameters() []*ast.Identifier {
+	params := []*ast.Identifier{}
+
+	p.NextToken()
+
+	if p.currToken.Type == token.RPAREN {
+		return params
+	}
+
+	ident := &ast.Identifier{Token: p.currToken, Value: p.currToken.Literal}
+	params = append(params, ident)
+
+	for p.peekToken.Type == token.COMMA {
+		p.NextToken()
+		p.NextToken()
+		ident := &ast.Identifier{Token: p.currToken, Value: p.currToken.Literal}
+		params = append(params, ident)
+	}
+
+	if !p.expectPeek(token.RPAREN) {
+		return nil
+	}
+
+	return params
 }
 
 func (p *Parser) currPrecedence() int {
