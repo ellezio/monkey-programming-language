@@ -74,6 +74,14 @@ func evalInfixExpression(operator string, left, right object.Object) object.Obje
 	switch {
 	case left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ:
 		return evalIntegerInfixExpression(operator, left, right)
+
+	// The reference comparison works for boolean values
+	// because there are only one TRUE and FALSE, thus every
+	// produced object of boolean shares the same address of one of those
+	case operator == "==":
+		return nativeBoolToBooleanObject(left == right)
+	case operator == "!=":
+		return nativeBoolToBooleanObject(left != right)
 	}
 
 	return NULL
