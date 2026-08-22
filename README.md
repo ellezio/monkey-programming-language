@@ -7,3 +7,5 @@ Beside implementing core functionality presented in the book I am also extending
 - [X] UTF-8 source code
 - [ ] Token metadata (row, column, ...)
 - [ ] input source code as Reader insteadof string
+- [ ] line and column where the error occured
+- [ ] error stack traces
