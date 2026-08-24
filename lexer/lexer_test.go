@@ -31,6 +31,8 @@ func TestNextToken(t *testing.T) {
 
 	10 == 10;
 	10 != 9;
+	"foobar"
+	"foo bar"
 
 	�;
 	let so�me = 1;
@@ -145,6 +147,9 @@ func TestNextToken(t *testing.T) {
 		{token.NOT_EQ, "!="},
 		{token.INT, "9"},
 		{token.SEMICOLON, ";"},
+
+		{token.STRING, "foobar"},
+		{token.STRING, "foo bar"},
 
 		{token.ILLEGAL, string(utf8.RuneError)},
 		{token.SEMICOLON, ";"},

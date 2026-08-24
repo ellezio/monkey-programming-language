@@ -13,8 +13,9 @@ const (
 	ILLEGAL TokenType = "ILLEGAL"
 	EOF     TokenType = "EOF"
 
-	IDENT TokenType = "IDENT"
-	INT   TokenType = "INT"
+	IDENT  TokenType = "IDENT"
+	INT    TokenType = "INT"
+	STRING TokenType = "STRING"
 
 	ASSIGN   TokenType = "="
 	PLUS     TokenType = "+"
