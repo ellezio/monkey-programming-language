@@ -33,6 +33,7 @@ func TestNextToken(t *testing.T) {
 	10 != 9;
 	"foobar"
 	"foo bar"
+	[1, 2];
 
 	�;
 	let so�me = 1;
@@ -150,6 +151,13 @@ func TestNextToken(t *testing.T) {
 
 		{token.STRING, "foobar"},
 		{token.STRING, "foo bar"},
+
+		{token.LBRACKET, "["},
+		{token.INT, "1"},
+		{token.COMMA, ","},
+		{token.INT, "2"},
+		{token.RBRACKET, "]"},
+		{token.SEMICOLON, ";"},
 
 		{token.ILLEGAL, string(utf8.RuneError)},
 		{token.SEMICOLON, ";"},

@@ -493,6 +493,44 @@ func TestStringLiteralExpression(t *testing.T) {
 	}
 }
 
+func TestParsingArrayLiteral(t *testing.T) {
+	input := `[1, 2 * 2, 3 + 3]`
+
+	l := lexer.New(input)
+	program := prepareProgram(t, l, 1)
+
+	stmt := program.Statements[0].(*ast.ExpressionStatement)
+	arr, ok := stmt.Expression.(*ast.ArrayLiteral)
+	if !ok {
+		t.Fatalf("expression is not *ast.ArrayLiteral. got=%T", stmt.Expression)
+	}
+
+	if len(arr.Elements) != 3 {
+		t.Fatalf("wrong number of elements. got=%d, want=%d", len(arr.Elements), 3)
+	}
+
+	testIntegerLiteral(t, arr.Elements[0], 1)
+	testInfixExpression(t, arr.Elements[1], 2, "*", 2)
+	testInfixExpression(t, arr.Elements[2], 3, "+", 3)
+}
+
+func TestParsingEmptyArrayLiteral(t *testing.T) {
+	input := `[]`
+
+	l := lexer.New(input)
+	program := prepareProgram(t, l, 1)
+
+	stmt := program.Statements[0].(*ast.ExpressionStatement)
+	arr, ok := stmt.Expression.(*ast.ArrayLiteral)
+	if !ok {
+		t.Fatalf("expression is not *ast.ArrayLiteral. got=%T", stmt.Expression)
+	}
+
+	if len(arr.Elements) != 0 {
+		t.Fatalf("wrong number of elements. got=%d, want=%d", len(arr.Elements), 3)
+	}
+}
+
 func testLiteralExpression(t *testing.T, exp ast.Expression, expected any) bool {
 	switch v := expected.(type) {
 	case int:

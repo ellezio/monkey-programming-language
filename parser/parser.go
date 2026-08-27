@@ -64,6 +64,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefixParseFn(token.IF, p.parseIfExpression)
 	p.registerPrefixParseFn(token.FUNCTION, p.parseFunctionLiteral)
 	p.registerPrefixParseFn(token.STRING, p.parserStringLiteral)
+	p.registerPrefixParseFn(token.LBRACKET, p.parseArrayLiteral)
 
 	p.registerInfixParseFn(token.EQ, p.parseInfixExpression)
 	p.registerInfixParseFn(token.NOT_EQ, p.parseInfixExpression)
@@ -224,40 +225,9 @@ func (p *Parser) parseIdentifier() ast.Expression {
 }
 
 func (p *Parser) parseCallExpresion(left ast.Expression) ast.Expression {
-	call := &ast.CallExpression{
-		Token:    p.currToken,
-		Function: left,
-	}
-
-	call.Arguments = p.parseCallArguments()
-
+	call := &ast.CallExpression{Token: p.currToken, Function: left}
+	call.Arguments = p.parseExpressionList(token.RPAREN)
 	return call
-}
-
-func (p *Parser) parseCallArguments() []ast.Expression {
-	args := []ast.Expression{}
-
-	p.NextToken()
-
-	if p.currToken.Type == token.RPAREN {
-		return args
-	}
-
-	arg := p.parseExpression(LOWEST)
-	args = append(args, arg)
-
-	for p.peekToken.Type == token.COMMA {
-		p.NextToken()
-		p.NextToken()
-		arg := p.parseExpression(LOWEST)
-		args = append(args, arg)
-	}
-
-	if !p.expectPeek(token.RPAREN) {
-		return nil
-	}
-
-	return args
 }
 
 func (p *Parser) parseIntegerLiteral() ast.Expression {
@@ -420,6 +390,37 @@ func (p *Parser) parseFunctionParameters() []*ast.Identifier {
 
 func (p *Parser) parserStringLiteral() ast.Expression {
 	return &ast.StringLiteral{Token: p.currToken, Value: p.currToken.Literal}
+}
+
+func (p *Parser) parseArrayLiteral() ast.Expression {
+	arr := &ast.ArrayLiteral{Token: p.currToken}
+	arr.Elements = p.parseExpressionList(token.RBRACKET)
+	return arr
+}
+
+func (p *Parser) parseExpressionList(closingTokenType token.TokenType) []ast.Expression {
+	list := []ast.Expression{}
+
+	p.NextToken()
+
+	if p.currToken.Type == closingTokenType {
+		return list
+	}
+
+	elem := p.parseExpression(LOWEST)
+	list = append(list, elem)
+
+	for p.peekToken.Type == token.COMMA {
+		p.NextToken()
+		p.NextToken()
+		list = append(list, p.parseExpression(LOWEST))
+	}
+
+	if !p.expectPeek(closingTokenType) {
+		return nil
+	}
+
+	return list
 }
 
 func (p *Parser) currPrecedence() int {
