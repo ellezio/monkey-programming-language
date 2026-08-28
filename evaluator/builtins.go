@@ -58,4 +58,25 @@ var builtins = map[string]*object.Builtin{
 			return NULL
 		},
 	},
+	"rest": {
+		Fn: func(args ...object.Object) object.Object {
+			if len(args) != 1 {
+				return newError("wrong number of arguments. got=%d, want=1", len(args))
+			}
+
+			if args[0].Type() != object.ARRAY_OBJ {
+				return newError("argument to `rest` must be ARRAY, got %s", args[0].Type())
+			}
+
+			arg := args[0].(*object.Array)
+			length := len(arg.Elements)
+			if length > 0 {
+				elems := make([]object.Object, length-1)
+				copy(elems, arg.Elements[1:])
+				return &object.Array{Elements: elems}
+			}
+
+			return NULL
+		},
+	},
 }
