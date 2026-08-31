@@ -32,6 +32,7 @@ const (
 
 	COMMA     TokenType = ","
 	SEMICOLON TokenType = ";"
+	COLON     TokenType = ":"
 
 	LPAREN   TokenType = "("
 	RPAREN   TokenType = ")"
