@@ -324,6 +324,8 @@ func evalIndexExpression(left, index object.Object) object.Object {
 	switch {
 	case left.Type() == object.ARRAY_OBJ && index.Type() == object.INTEGER_OBJ:
 		return evalArrayIndexExpression(left, index)
+	case left.Type() == object.HASH_OBJ:
+		return evalHashIndexExpression(left, index)
 	default:
 		return newError("index operator not supported: %s", left.Type())
 	}
@@ -363,6 +365,21 @@ func evalHashLiteral(node *ast.HashLiteral, env *object.Environment) object.Obje
 	}
 
 	return &object.Hash{Pairs: pairs}
+}
+
+func evalHashIndexExpression(hash, key object.Object) object.Object {
+	hashkey, ok := key.(object.Hashable)
+	if !ok {
+		return newError("unusable as hash key: %s", key.Type())
+	}
+
+	hashObject := hash.(*object.Hash)
+	pair, ok := hashObject.Pairs[hashkey.HashKey()]
+	if !ok {
+		return NULL
+	}
+
+	return pair.Value
 }
 
 func nativeBoolToBooleanObject(input bool) *object.Boolean {
