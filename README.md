@@ -10,3 +10,4 @@ Beside implementing core functionality presented in the book I am also extending
 - [ ] line and column where the error occured
 - [ ] error stack traces
 - [ ] string character escaping
+- [ ] hash collision mitigation
